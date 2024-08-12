@@ -25,13 +25,13 @@ dependencies {
 }
 
 task replaceBootstrapValues {
-    def roleId = System.getenv("VAULT_ROLE_ID")
-    def secretId = System.getenv("VAULT_SECRET_ID")
+    def roleId = project.findProperty("vaultRoleId") ?: System.getenv("VAULT_ROLE_ID")
+    def secretId = project.findProperty("vaultSecretId") ?: System.getenv("VAULT_SECRET_ID")
     def bootstrapFile = file("src/main/resources/bootstrap-production.yml")
 
     doLast {
         if (roleId == null || secretId == null) {
-            throw new GradleException("VAULT_ROLE_ID and VAULT_SECRET_ID environment variables must be set")
+            throw new GradleException("vaultRoleId and vaultSecretId properties or environment variables must be set")
         }
 
         def content = bootstrapFile.text
@@ -42,5 +42,6 @@ task replaceBootstrapValues {
         println "Replaced ROLEID and SECRETID in bootstrap-production.yml"
     }
 }
+
 
 compileJava.dependsOn replaceBootstrapValues
