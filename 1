@@ -1,0 +1,46 @@
+apply plugin: 'org.springframework.boot'
+apply from: "$gradleDir/pylon.gradle"
+apply from: jpaGradle
+
+jar {
+    archiveName = 'app.jar'
+    springBoot {
+        executable = true
+    }
+}
+
+dependencies {
+    compileOnly "org.projectlombok:lombok"
+    compile "org.springframework.boot:spring-boot-starter-web"
+    compile "org.springframework.boot:spring-boot-configuration-processor"
+    compile group: "org.springframework", name: "spring-context-support"
+    compile "org.projectlombok:lombok:1.16.22"
+    compile "com.fasterxml.jackson.module:jackson-module-parameter-names"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+    testCompile "org.springframework.boot:spring-boot-starter-test"
+    compile "org.elasticsearch:elasticsearch:6.3.0"
+    compile "org.elasticsearch.client:elasticsearch-rest-high-level-client:6.3.0"
+    compile group: "com.google.guava", name: "guava", version: "18.0"
+}
+
+task replaceBootstrapValues {
+    def roleId = System.getenv("VAULT_ROLE_ID")
+    def secretId = System.getenv("VAULT_SECRET_ID")
+    def bootstrapFile = file("src/main/resources/bootstrap-production.yml")
+
+    doLast {
+        if (roleId == null || secretId == null) {
+            throw new GradleException("VAULT_ROLE_ID and VAULT_SECRET_ID environment variables must be set")
+        }
+
+        def content = bootstrapFile.text
+        content = content.replace("YOUR_PLACEHOLDER_FOR_ROLE_ID", roleId)
+        content = content.replace("YOUR_PLACEHOLDER_FOR_SECRET_ID", secretId)
+
+        bootstrapFile.write(content)
+        println "Replaced ROLEID and SECRETID in bootstrap-production.yml"
+    }
+}
+
+compileJava.dependsOn replaceBootstrapValues
